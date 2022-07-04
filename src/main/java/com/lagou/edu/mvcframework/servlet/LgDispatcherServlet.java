@@ -170,8 +170,9 @@ public class LgDispatcherServlet extends HttpServlet {
     //加载配置文件
     private void doLoadConfig(String contextConfigLocation) {
         try {
-            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("springmvc.properties");
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(contextConfigLocation);
             properties.load(resourceAsStream);
+
         } catch (IOException e) {
             e.printStackTrace();
         }

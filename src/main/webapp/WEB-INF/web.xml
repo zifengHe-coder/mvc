@@ -10,7 +10,7 @@
     <servlet-class>com.lagou.edu.mvcframework.servlet.LgDispatcherServlet</servlet-class>
     <init-param>
       <param-name>contextConfigLocation</param-name>
-      <param-value>spingmvc.properties</param-value>
+      <param-value>springmvc.properties</param-value>
     </init-param>
   </servlet>
 
