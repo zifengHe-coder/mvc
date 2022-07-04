@@ -154,7 +154,7 @@ public class LgDispatcherServlet extends HttpServlet {
     //扫描类 获取磁盘上的文件夹  com/lagou/demo
     private void doScan(String scanPackage) {
         String scanPackagePath = Thread.currentThread().getContextClassLoader().getResource("").getPath() + scanPackage.replaceAll("\\.", "/");
-        File pack = new File(scanPackage);
+        File pack = new File(scanPackagePath);
         File[] files = pack.listFiles();
         for (File file : files) {
             if (file.isDirectory()) {
@@ -170,7 +170,7 @@ public class LgDispatcherServlet extends HttpServlet {
     //加载配置文件
     private void doLoadConfig(String contextConfigLocation) {
         try {
-            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(contextConfigLocation);
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream("springmvc.properties");
             properties.load(resourceAsStream);
         } catch (IOException e) {
             e.printStackTrace();
