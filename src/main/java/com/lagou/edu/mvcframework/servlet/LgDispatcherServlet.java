@@ -4,6 +4,7 @@ import com.lagou.edu.mvcframework.annotations.LagouAutowire;
 import com.lagou.edu.mvcframework.annotations.LagouController;
 import com.lagou.edu.mvcframework.annotations.LagouRequestMapping;
 import com.lagou.edu.mvcframework.annotations.LagouService;
+import com.lagou.edu.mvcframework.pojo.Handler;
 import org.junit.Test;
 
 import javax.servlet.ServletConfig;
@@ -14,7 +15,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LgDispatcherServlet extends HttpServlet {
     private Properties properties = new Properties();
@@ -22,7 +26,9 @@ public class LgDispatcherServlet extends HttpServlet {
     //IOC容器
     private Map<String, Object> ioc = new HashMap<>();
     // handlerMapping
-    private Map<String, Method> handlerMapping = new HashMap<>(); //存储url和method之间的映射关系
+//    private Map<String, Method> handlerMapping = new HashMap<>(); //存储url和method之间的映射关系
+
+    private List<Handler> handlerMapping = new ArrayList<>();
 
 
     @Override
@@ -66,9 +72,24 @@ public class LgDispatcherServlet extends HttpServlet {
                 if (!method.isAnnotationPresent(LagouRequestMapping.class)) continue;
                 LagouRequestMapping methodAnnotation = method.getAnnotation(LagouRequestMapping.class);
                 String methodUrl = methodAnnotation.value();
-                String url = baseUrl + methodUrl;
+                String url = baseUrl + methodUrl; // /demo/query
+                //把method所有信息及url封装成handler
+                Handler handler = new Handler(entry.getValue(), method, Pattern.compile(url));
+
+                //处理计算参数位置
+                Parameter[] parameters = method.getParameters();
+                for (int j = 0; j < parameters.length; j++) {
+                    Parameter parameter = parameters[j];
+                    if (parameter.getType() == HttpServletRequest.class || parameter.getType() == HttpServletResponse.class) {
+                        //如果是request 或 response对象 参数名称存HttpServletRequest和 HttpServletResponse
+                        handler.getParamIndexMapping().put(parameter.getType().getSimpleName(), j); //<HttpServletRequest,1>
+                    } else {
+                        handler.getParamIndexMapping().put(parameter.getName(), j); //<name, 2>
+                    }
+                }
+                handlerMapping.add(handler);
                 //建立url和method之间的映射关系
-                handlerMapping.put(url, method);
+//                handlerMapping.put(url, method);
             }
 
         }
@@ -186,7 +207,29 @@ public class LgDispatcherServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        //处理请求
+        //处理请求:根据url，找到对应的method，进行处理
+//        String requestURI = req.getRequestURI();
+//        Method method = handlerMapping.get(requestURI);//获取反射方法
+        //反射调用,需要传入参数
+//        method.invoke()
+        //根据url获取当前请求的handler
+        Handler handler = getHandler(req);
+        if (handler == null) {
+            resp.getWriter().write("404 not found!");
+            return;
+        }
+        //最终调用handlerMethod
+    }
+
+    private Handler getHandler(HttpServletRequest req) {
+        if (handlerMapping.isEmpty()) return null;
+        String uri = req.getRequestURI();
+        for (Handler handler : handlerMapping) {
+            Matcher matcher = handler.getPattern().matcher(uri);
+            if (!matcher.find()) continue;
+            return handler;
+        }
+        return null;
     }
 
     //首字母小写
