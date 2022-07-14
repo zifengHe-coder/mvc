@@ -5,6 +5,7 @@ import com.lagou.edu.mvcframework.annotations.LagouController;
 import com.lagou.edu.mvcframework.annotations.LagouRequestMapping;
 import com.lagou.edu.mvcframework.annotations.LagouService;
 import com.lagou.edu.mvcframework.pojo.Handler;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
 import javax.servlet.ServletConfig;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
@@ -217,6 +219,39 @@ public class LgDispatcherServlet extends HttpServlet {
         if (handler == null) {
             resp.getWriter().write("404 not found!");
             return;
+        }
+        //参数绑定
+        //获取所有参数类型数组,这个数组的长度就是我们最后要传入的args的长度
+        Class<?>[] parameterTypes = handler.getMethod().getParameterTypes();
+        //根据上述数组长度创建新的数组,要传入反射调用
+        Object[] paramValues = new Object[parameterTypes.length];
+        // 以下向参数数组中传值，还要包状参数的顺序和方法中的形参顺序一致
+        Map<String, String[]> parameterMap = req.getParameterMap();
+
+        //遍历request中所有参数，填充入args中
+        for (Map.Entry<String, String[]> param : parameterMap.entrySet()) {
+            // name=1&name=2 name [1,2]
+            String value = StringUtils.join(param.getValue(), ","); // 如同1,2
+            //如果参数和方法中的参数匹配上了，填充参数
+            if (!handler.getParamIndexMapping().containsKey(param.getKey())) continue;
+
+            // 与形参列表中参数对应，对应索引位置放入paramValues
+            Integer index = handler.getParamIndexMapping().get(param.getKey());//name index = 2
+            paramValues[index] = value;
+        }
+
+        // 单独传req, resp
+        int requestIndex = handler.getParamIndexMapping().get(HttpServletRequest.class.getSimpleName());
+        paramValues[requestIndex] = req;
+        int responseIndex = handler.getParamIndexMapping().get(HttpServletResponse.class.getSimpleName());
+        paramValues[responseIndex] = resp;
+        //最终调用handler的method属性
+        try {
+            handler.getMethod().invoke(handler.getController(), paramValues);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
         //最终调用handlerMethod
     }
