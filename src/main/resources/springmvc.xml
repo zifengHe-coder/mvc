@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:component-scan base-package="com.lagou"></context:component-scan>
+
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/jsp/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+
+    <!--自定义的视图解析器    value="1"数字越小优先级越高-->
+    <bean class="com.lagou.view.MyMeiNvViewResolver">
+        <property name="order" value="1"></property>
+    </bean>
+</beans>
+
+<!--        本配置文件中定义了两个视图解析器InternalResourceViewResolver和-->
+<!--        MyMeiNvViewResolver。-->
+<!--        视图解析器默认优先级都是无穷低，在xml中如果不指定优先级，视图解析器会根据配置-->
+<!--        文件配置的先后位置定义优先级，而若InternalResourceViewResolver先执行，那么在-->
+<!--        new View的时候会使用第三种方法new，即调用父类默认创建一个View；然后是以拼串的-->
+<!--        形式进行的 ，这样子就会报404了，所以需要指定优先级。让自定义的视图解析器先执行-->

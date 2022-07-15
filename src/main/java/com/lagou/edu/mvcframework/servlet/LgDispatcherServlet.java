@@ -1,9 +1,6 @@
 package com.lagou.edu.mvcframework.servlet;
 
-import com.lagou.edu.mvcframework.annotations.LagouAutowire;
-import com.lagou.edu.mvcframework.annotations.LagouController;
-import com.lagou.edu.mvcframework.annotations.LagouRequestMapping;
-import com.lagou.edu.mvcframework.annotations.LagouService;
+import com.lagou.edu.mvcframework.annotations.*;
 import com.lagou.edu.mvcframework.pojo.Handler;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -220,6 +217,14 @@ public class LgDispatcherServlet extends HttpServlet {
             resp.getWriter().write("404 not found!");
             return;
         }
+        String validateParam = null;
+        List<String> allowValue = null;
+        if (handler.getMethod().isAnnotationPresent(LagouSecurity.class)) {
+            LagouSecurity annotation = handler.getMethod().getAnnotation(LagouSecurity.class);
+            validateParam = annotation.param() != null ? annotation.param() : null;
+            allowValue = annotation.value() != null ? Arrays.asList(annotation.value().split(",")) : new ArrayList<>();
+        }
+
         //参数绑定
         //获取所有参数类型数组,这个数组的长度就是我们最后要传入的args的长度
         Class<?>[] parameterTypes = handler.getMethod().getParameterTypes();
@@ -228,6 +233,18 @@ public class LgDispatcherServlet extends HttpServlet {
         // 以下向参数数组中传值，还要包状参数的顺序和方法中的形参顺序一致
         Map<String, String[]> parameterMap = req.getParameterMap();
 
+        //进行参数校验
+        if (validateParam != null) {
+            if (!parameterMap.containsKey(validateParam)) {
+                resp.getWriter().write("身份校验失败!");
+                return;
+            }
+            String value = StringUtils.join(parameterMap.get(validateParam), ",");
+            if (!allowValue.contains(value)) {
+                resp.getWriter().write("身份校验失败!");
+                return;
+            }
+        }
         //遍历request中所有参数，填充入args中
         for (Map.Entry<String, String[]> param : parameterMap.entrySet()) {
             // name=1&name=2 name [1,2]
@@ -239,6 +256,9 @@ public class LgDispatcherServlet extends HttpServlet {
             Integer index = handler.getParamIndexMapping().get(param.getKey());//name index = 2
             paramValues[index] = value;
         }
+
+
+
 
         // 单独传req, resp
         int requestIndex = handler.getParamIndexMapping().get(HttpServletRequest.class.getSimpleName());
