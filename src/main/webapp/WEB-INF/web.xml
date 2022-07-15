@@ -7,26 +7,11 @@
 
   <filter>
     <!-- 过滤器名字自定义 -->
-    <filter-name>CharacterEncodingFilter</filter-name>
-    <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
-    <!-- 设置项目中使用的字符编码 -->
-    <init-param>
-      <param-name>encoding</param-name>
-      <param-value>UTF-8</param-value>
-    </init-param>
-    <!-- 强制请求对象(HttpServletRequest)使用encoding编码的值 -->
-    <init-param>
-      <param-name>forceRequestEncoding</param-name>
-      <param-value>true</param-value>
-    </init-param>
-    <!-- 强制应答对象(HttpServletResponse)使用encoding编码的值 -->
-    <init-param>
-      <param-name>forceResponseEncoding</param-name>
-      <param-value>true</param-value>
-    </init-param>
+    <filter-name>GenericEncodingFilter</filter-name>
+    <filter-class>com.lagou.config.GenericEncodingFilter</filter-class>
   </filter>
   <filter-mapping>
-    <filter-name>CharacterEncodingFilter</filter-name>
+    <filter-name>GenericEncodingFilter</filter-name>
     <!-- /*：表示强制所有的请求先通过过滤器来处理 -->
     <url-pattern>/*</url-pattern>
   </filter-mapping>
